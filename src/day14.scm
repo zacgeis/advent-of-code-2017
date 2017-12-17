@@ -29,11 +29,11 @@
 
 ; (print (count-grid (generate-grid "ffayrhll")))
 
-(define (positions len width)
-  (let loop ((i 0) (pos-lst '()))
-    (if (< i len)
-      (loop (+ i 1) (cons (list (remainder i width) (inexact->exact (floor (/ i width)))) pos-lst))
-      pos-lst)))
+(define (product-set l1 l2)
+  (foldr append '() (map (lambda (i1) (map (lambda (i2) (list i1 i2)) l2)) l1)))
+
+(define (positions vec)
+  (product-set (vector->list (range (vector-length vec))) (vector->list (range (vector-length (vector-ref vec 0))))))
 
 (define (get-neighbors pos)
   (let ((x (car pos)) (y (cadr pos)))
@@ -43,35 +43,37 @@
       (list (- x 1) (+ y 0))
       (list (+ x 0) (- y 1)))))
 
-(define (get-pos vec width pos)
+(define (get-pos vec pos)
   (let* ((x (car pos))
          (y (cadr pos))
-         (i (+ x (* width y))))
-    (if (and (and (>= x 0) (>= y 0)) (< i (vector-length vec)))
-      (vector-ref vec i)
-      0)))
+         (vector-height (vector-length vec))
+         (vector-width (vector-length (vector-ref vec 0))))
+    (if (and
+          (and (>= x 0) (>= y 0))
+          (and (< x vector-width) (< y vector-height)))
+      (vector-ref (vector-ref vec y) x) 0)))
 
-(define (connected vec width pos)
+(define (connected vec pos)
   (let loop ((stack (list pos)) (visited '()))
     (cond
       ((null? stack) visited)
       ((member (car stack) visited) (loop (cdr stack) visited))
       (else
         (let ((neighbors (get-neighbors (car stack))))
-          (loop (append (filter (lambda (n) (= (get-pos vec width n) 1)) neighbors) (cdr stack)) (cons (car stack) visited)))))))
+          (loop (append (filter (lambda (n) (= (get-pos vec n) 1)) neighbors) (cdr stack)) (cons (car stack) visited)))))))
 
-(define (segments width vec)
+(define (segments vec)
   (let loop ((visited '())
-             (pos-lst (positions (vector-length vec) width))
+             (pos-lst (positions vec))
              (count 0))
     (cond
       ((null? pos-lst) count)
       ((member (car pos-lst) visited) (loop visited (cdr pos-lst) count))
-      ((= (get-pos vec width (car pos-lst)) 1)
-       (let ((seg (connected vec width (car pos-lst))))
+      ((= (get-pos vec (car pos-lst)) 1)
+       (let ((seg (connected vec (car pos-lst))))
          (loop (append visited seg) (cdr pos-lst) (+ count 1))))
       (else
         (begin
           (loop (cons (car pos-lst) visited) (cdr pos-lst) count))))))
 
-(print (segments 128 (list->vector (foldr append '() (generate-grid "ffayrhll")))))
+(print (segments (list->vector (map list->vector (generate-grid "ffayrhll")))))
