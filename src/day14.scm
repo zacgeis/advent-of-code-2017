@@ -27,7 +27,7 @@
 (define (count-grid grid)
   (fold + 0 (map (lambda (row) (fold (lambda (i a) (if (= i 1) (+ a 1) a)) 0 row)) grid)))
 
-; (print (count-grid (generate-grid "ffayrhll")))
+(print (count-grid (generate-grid "ffayrhll")))
 
 (define (product-set l1 l2)
   (foldr append '() (map (lambda (i1) (map (lambda (i2) (list i1 i2)) l2)) l1)))
