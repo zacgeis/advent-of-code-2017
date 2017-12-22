@@ -16,8 +16,8 @@
 (define (flips l)
   (list l
     (reverse (map reverse l))
-    (map reverse (apply zip input))
-    (reverse (apply zip input))))
+    (map reverse (apply zip l))
+    (reverse (apply zip l))))
 
 (define (flip-rotations l)
   (foldr append '() (map rotations (flips l))))
@@ -35,14 +35,22 @@
   (any (lambda (l) (assoc l rules)) (flip-rotations g)))
 
 (define (combine gl)
-  (print-g gl)
-  (caar gl))
+  (let ((n (inexact->exact (sqrt (length gl)))))
+    (let loop ((grid gl) (r '()))
+      (if (null? grid) (map (lambda (l) (apply append l)) r)
+        (loop (drop grid n) (append r (apply zip (take grid n))))))))
 
-(define (process g rules)
+(define (process g rules n)
   (let loop ((i 0) (grid g))
     (cond
-      ((= i 2) grid)
-      (else (loop (+ i 1) (combine (map (lambda (gs) (cdr (find-rule rules gs))) (split (if (even? (length grid)) 2 3) grid))))))))
+      ((= i n) grid)
+      (else (loop (+ i 1)
+                  (combine (map (lambda (gs) (cadr (find-rule rules gs)))
+                                (split (if (even? (length grid)) 2 3) grid))))))))
+
+(define (count-cells g)
+  (fold + 0
+    (map (lambda (r) (fold (lambda (c a) (if (equal? c #\#) (+ a 1) a)) 0 r)) g)))
 
 (define rules
   (map (lambda (s)
@@ -51,8 +59,6 @@
        (string-split (read-all "data/day21-1.txt") "\n")))
 
 (define input '((#\. #\# #\.) (#\. #\. #\#) (#\# #\# #\#)))
-(print (process input rules))
-; (print (split 2 (cadr (find-rule rules input))))
-
-(print (split 2 '((1 2 3 4 0 0) (5 6 7 8 0 0) (9 10 11 12 0 0) (13 14 15 16 0 0) (1 1 1 1 1 1) (1 1 1 1 1 1))))
+(print (count-cells (process input rules 5)))
+(print (count-cells (process input rules 18)))
 
